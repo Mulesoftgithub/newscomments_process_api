@@ -1,0 +1,13 @@
+%dw 2.0
+
+type auto_a7d3746d_58ef_4a18_ae2c_b38158c03516_Output_Variables_newsInfo = {
+  sourceId: String, 
+  id: Number, 
+  sourceName: String, 
+  publishedDate: String, 
+  detail: String, 
+  title: String, 
+  providerName: String, 
+  _?: Any
+}
+

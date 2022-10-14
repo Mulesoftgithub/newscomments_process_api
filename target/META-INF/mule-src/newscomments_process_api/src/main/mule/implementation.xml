@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:comments-crudapi="http://www.mulesoft.org/schema/mule/comments-crudapi" xmlns:external-api-news="http://www.mulesoft.org/schema/mule/external-api-news" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/external-api-news http://www.mulesoft.org/schema/mule/external-api-news/current/mule-external-api-news.xsd
+http://www.mulesoft.org/schema/mule/comments-crudapi http://www.mulesoft.org/schema/mule/comments-crudapi/current/mule-comments-crudapi.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="8118b4a7-bf3d-4bf6-b07d-44f09459413f" basePath="/api" >
+		<http:request-connection host="localhost" port="8081"/>
+	</http:request-config>
+	<http:request-config name="HTTP_Request_configuration1" doc:name="HTTP Request configuration" doc:id="7965b602-1e26-4ad9-999e-6195a758cb4b" basePath="/api" >
+		<http:request-connection host="localhost" port="8082" connectionIdleTimeout="90000"/>
+	</http:request-config>
+	<http:request-config name="HTTP_Request_configuration2" doc:name="HTTP Request configuration" doc:id="be48cd66-1808-4633-bcac-f3bcda5a8482" basePath="/api" >
+		<http:request-connection host="localhost" port="8085" />
+	</http:request-config>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="563d9c89-24af-489c-afb7-97a5fa22dd1e" >
+		<http:listener-connection host="0.0.0.0" port="8089" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration3" doc:name="HTTP Request configuration" doc:id="d333d216-6551-4ec8-a11c-267805cc3d83" >
+		<http:request-connection host="localhost" port="8089" />
+	</http:request-config>
+	<flow name="getAllNews" doc:id="6ad615c5-4115-4fda-9a0d-a082e1ee4e59" >
+		<try doc:name="Try" doc:id="ce0027c3-2402-49b8-8307-98cfaae63d47" >
+			<http:request method="GET" doc:name="Request" doc:id="8433279b-942a-4e74-8bf1-7aa10fcbac16" config-ref="HTTP_Request_configuration" path="/list" />
+			<ee:transform doc:name="Transform Message" doc:id="93dd5719-9f05-4cbe-b5ea-25b02db2611f">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		</try>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="9e327d66-0d0a-4968-9bc5-cb43bb0f2602" >
+				<ee:transform doc:name="Transform Message" doc:id="48cf0543-7741-4ca5-a95b-6feaf9be4e6f" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"error": error,
+	"source": "NewsComments Process API - getAllNews FLow",
+	"type": "Error",
+	"priority": "Hight"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="getNews" doc:id="5d44e216-4094-4b37-ac1d-d4e9aa9b4463" >
+		<try doc:name="Try" doc:id="be4af537-0bab-420d-955d-ea79f1ae4194" >
+			<set-variable value="#[attributes.uriParams.newsID]" doc:name="Set Variable" doc:id="84f6d173-0d31-4ee0-b689-639226921e3f" variableName="id" />
+			<set-variable value="#[attributes.queryParams.sourceId]" doc:name="Set Variable" doc:id="fea5e4b2-519e-47b1-9635-c27393b5e008" variableName="sourceId" />
+			<http:request method="GET" doc:name="Request" doc:id="62cd03ac-898a-47af-aa16-0b3d05d9a506" config-ref="HTTP_Request_configuration" path="/get-details">
+			<http:query-params><![CDATA[#[output application/java
+---
+{
+	"id" : vars.id,
+	"sourceId" : vars.sourceId
+}]]]></http:query-params>
+		</http:request>
+			<ee:transform doc:name="Transform Message" doc:id="25c9e45e-6e8d-46d8-bdcd-7dca3a2853d3">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		</try>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="d64b51bc-e7a6-48ec-b2f6-c598ce32e9ef" >
+				<ee:transform doc:name="Transform Message" doc:id="d38b6588-4674-4e2d-bbcf-9c10fbb98a1f" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"error": error,
+	"source": "NewsComments Process API - getNews FLow",
+	"type": "Error",
+	"priority": "Meduim"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="addComment" doc:id="692d2f06-2edd-4be3-a5f5-8d49ded83e7a" >
+		<try doc:name="Try" doc:id="96bac655-2430-4689-85dd-1fd51627b0dd" >
+			<set-variable value="#[attributes.uriParams.newsID]" doc:name="Set Variable" doc:id="3c0f39f4-6447-4551-bd18-970fd82df6c9" variableName="id" />
+			<set-variable value="#[attributes.queryParams.sourceId]" doc:name="Set Variable" doc:id="25318ba4-e446-45b2-9ded-15c38e7817a4" variableName="sourceId" />
+			<set-variable value="#[payload.message]" doc:name="Set Variable" doc:id="14beaa15-135a-4017-b604-8abaf1a4c994" variableName="message" />
+			<flow-ref doc:name="Flow Reference" doc:id="fb028e45-6059-4f3e-9c8e-03e2bf314a41" name="getNews"/>
+			<set-variable value="#[payload]" doc:name="Set Variable" doc:id="626c7748-8236-4a76-ba4a-dd3834d045fc" variableName="newsInfo"/>
+			<http:request method="POST" doc:name="Request" doc:id="9784b316-116f-44a5-bd99-4d4d8683f1f2" config-ref="HTTP_Request_configuration1" path="/comments">
+				<http:body><![CDATA[#[output application/json
+---
+{
+	newsId: vars.id as Number,
+	message: vars.message
+}]]]></http:body>
+				<http:headers><![CDATA[#[output application/json
+---
+{
+	"Content-Type" : "application/json"
+}]]]></http:headers>
+			</http:request>
+			<http:request method="GET" doc:name="Request" doc:id="1cbf4039-4ca6-4990-b0c7-41ebe8200d43" config-ref="HTTP_Request_configuration1" path="/comments/News/{newsID}">
+				<http:uri-params ><![CDATA[#[{'newsID' : vars.id }]]]></http:uri-params>
+			</http:request>
+			<set-variable value="#[payload]" doc:name="Set Variable" doc:id="fa389998-9c2f-40a7-a009-9b7e4c14c119" variableName="commentsInfo" />
+			<ee:transform doc:name="Transform Message" doc:id="1c591dc5-88fd-4bc2-8b5e-77ff9403cf37" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var newsInfos = vars.newsInfo
+---
+{
+	"id": newsInfos.id,
+	"sourceId": newsInfos.sourceId,
+	"sourceName": newsInfos.sourceName,
+	"providerName": newsInfos.providerName,
+	"title": newsInfos.title,
+	"publishedDate": newsInfos.publishedDate,
+	"comments": vars.commentsInfo
+}
+]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		</try>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="81e03ce0-3361-4717-830b-ef0f55c66548" >
+				<ee:transform doc:name="Transform Message" doc:id="52657df8-ff8d-4f1f-bb84-b313cec221e3">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"error": error,
+	"source": "NewsComments Process API - addComment FLow",
+	"type": "Error",
+	"priority": "Hight"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="getNewsComments" doc:id="a7d3746d-58ef-4a18-ae2c-b38158c03516" >
+		<try doc:name="Try" doc:id="7e983c48-0554-4af7-b260-d283309a477d" >
+			<set-variable value="#[attributes.uriParams.newsID]" doc:name="Set Variable" doc:id="7c77047d-d4a7-4e9a-92b1-4d245fb61d52" variableName="id" />
+			<set-variable value="#[attributes.queryParams.sourceId]" doc:name="Set Variable" doc:id="4be88573-139b-4705-a0de-6d8949dd2cc0" variableName="sourceId" />
+			<flow-ref doc:name="Flow Reference" doc:id="2639a0fa-144e-431e-81b3-a00aa7c1020b" name="getNews" />
+			<set-variable value="#[payload]" doc:name="Set Variable" doc:id="b91bdfa9-ef77-474e-aaea-b925424b46d8" variableName="newsInfo" />
+			<http:request method="GET" doc:name="Request" doc:id="7cb4ef40-b434-4839-966b-bf0276d9d8fa" config-ref="HTTP_Request_configuration1" path="/comments/News/{newsID}">
+			<http:uri-params><![CDATA[#[{'newsID' : vars.id }]]]></http:uri-params>
+		</http:request>
+			<ee:transform doc:name="Transform Message" doc:id="831c484c-1275-49af-8a10-8a0d87ae35ce">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		</try>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="82a9a922-25b1-4406-a498-49aa971691a2" >
+				<ee:transform doc:name="Transform Message" doc:id="adb95b6d-97c1-4aae-85c6-bdbb183e6df2" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"error": error,
+	"source": "NewsComments Process API - addComment FLow",
+	"type": "Error",
+	"priority": "Hight"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="searchInNewsCommentsByKeyword" doc:id="d185b26c-09bb-41da-9171-c7930eb7f47d" >
+		<try doc:name="Try" doc:id="4bcac383-cd93-413d-9896-16f42aa15acd" >
+			<set-variable value="#[attributes.uriParams.newsID]" doc:name="Set Variable" doc:id="c2f9f583-3d04-4b11-a124-51ed6f4371e9" variableName="id"/>
+			<set-variable value="#[attributes.queryParams.sourceId]" doc:name="Set Variable" doc:id="914f4479-db51-4231-801c-21b272be52cd" variableName="sourceId"/>
+			<set-variable value="#[attributes.queryParams.keyword as String]" doc:name="Set Variable" doc:id="1dda4d7a-75ab-4a3b-a51e-b714e8108df8" variableName="keyword" />
+			<flow-ref doc:name="Flow Reference" doc:id="5b162925-053e-4858-ac88-980f3d3ef3c0" name="getNewsComments" />
+			<ee:transform doc:name="Transform Message" doc:id="716ace35-d532-44b1-991d-e37b64ae672c">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var keyword = vars.keyword
+---
+
+payload filter($.message contains(keyword)) map {
+		id: $.id,
+		newsId: $.newsId,
+		message: $.message,
+		created_at: $.created_at,
+		updated_at: $.updated_at	
+} filter($.message contains(keyword))]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		</try>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="cdc6ede0-b73c-420b-9910-659e58c20534" >
+				<ee:transform doc:name="Transform Message" doc:id="6e16aad9-59d6-4099-8137-230315c323f1" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"error": error,
+	"source": "NewsComments Process API - getAllNews FLow",
+	"type": "Error",
+	"priority": "Hight"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="EditComment" doc:id="1693d1e3-e969-4243-b825-167e2ce53971" >
+		<try doc:name="Try" doc:id="2fad5163-36fe-484a-9d8e-2e6df518d328" >
+			<set-variable value="#[attributes.uriParams.newsID]" doc:name="Set Variable" doc:id="5bec133b-fd1a-4af0-9570-a3257ddd5251" variableName="id" />
+			<set-variable value="#[attributes.uriParams.commentID]" doc:name="Set Variable" doc:id="95cdd543-c1f4-4c9c-a855-bceeae2504b3" variableName="commentID" />
+			<set-variable value="#[payload.message]" doc:name="Set Variable" doc:id="dbdb06c0-5054-423e-8aa4-d7f12953d07a" variableName="message" />
+			<http:request method="PUT" doc:name="Request" doc:id="2b3e2ba1-dc66-4f9c-9c18-ce37fa2192d9" config-ref="HTTP_Request_configuration1" path="/comments/{commentID}">
+			<http:body><![CDATA[#[output application/json
+---
+{
+	message: vars.message
+}]]]></http:body>
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"Content-Type" : "application/json"
+}]]]></http:headers>
+			<http:uri-params><![CDATA[#[{'commentID' : vars.commentID }]]]></http:uri-params>
+		</http:request>
+		</try>
+	</flow>
+	<flow name="DeleteComment" doc:id="b73595cc-d9db-454b-86a8-565b47c7f5c1" >
+		<try doc:name="Try" doc:id="df0855ab-6995-41b0-824c-6097006e13f3" >
+			<set-variable value="#[attributes.uriParams.newsID]" doc:name="Set Variable" doc:id="a2e0ebcf-8141-499d-aba7-8217285f0bdb" variableName="id" />
+			<set-variable value="#[attributes.uriParams.commentID]" doc:name="Set Variable" doc:id="63acc53b-a1ae-43bc-a289-e0d92dd235ec" variableName="commentID" />
+			<http:request method="DELETE" doc:name="Request" doc:id="1cc33943-5acc-435b-b822-ba6249191d89" config-ref="HTTP_Request_configuration1" path="/comments/{commentID}">
+			<http:uri-params><![CDATA[#[{'commentID' : vars.commentID }]]]></http:uri-params>
+		</http:request>
+			<ee:transform doc:name="Transform Message" doc:id="7c0cc7dc-e96e-478f-a141-a40cdf3156ec">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{ 
+	"message": "Comment deleted successuflly"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		</try>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="742bb380-0692-4c84-b7c7-8cfdd969452e" >
+				<ee:transform doc:name="Transform Message" doc:id="d2f267b2-e97e-485d-9da6-78ca6ece1826" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"error": error,
+	"source": "NewsComments Process API - getAllNews FLow",
+	"type": "Error",
+	"priority": "Hight"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="NewsCommentsStatistiques" doc:id="452f8665-363a-4ccb-ab6f-aec389a16fe6" >
+		<http:listener doc:name="Listener" doc:id="91dcae3f-7ca6-4547-96f5-f0ac859910e8" config-ref="HTTP_Listener_config" path="/batch/{id}"/>
+		<http:request method="GET" doc:name="Request" doc:id="2e2d220f-c571-44de-9c4d-eec328bba55b" config-ref="HTTP_Request_configuration1" path="/comments/News/{newsID}/all">
+			<http:uri-params ><![CDATA[#[{ 'newsID': attributes.uriParams.id }]]]></http:uri-params>
+		</http:request>
+		<set-variable value="#[sizeOf(payload)]" doc:name="Set Variable" doc:id="7a6f3fcd-2242-47f2-a081-a8ea3b48735d" variableName="comments"/>
+		<set-variable value="0" doc:name="Set Variable" doc:id="e753692a-a3ed-415d-bc35-4b6ecc12168a" variableName="updated"/>
+		<set-variable value="0" doc:name="Set Variable" doc:id="0fc2aa1e-6d23-4b22-8163-ab3112272461" variableName="deleted"/>
+		<set-variable value="0" doc:name="Set Variable" doc:id="78035e1f-0054-45ea-a892-fec13a40af5a" variableName="noUpdated"/>
+		<foreach doc:name="For Each" doc:id="e92d631a-3e2b-4076-b964-f89e478fe572" collection="#[payload]">
+			<choice doc:name="Choice" doc:id="f17441d7-38ed-4d93-9e55-279b37acbb38" >
+				<when expression="#[payload.deleted_at != null]">
+					<set-variable value="#[vars.deleted as Number + 1]" doc:name="Set Variable" doc:id="7e3f06bb-92ad-4101-ab2d-644e6efbb507" variableName="deleted"/>
+				</when>
+				<when expression="#[payload.created_at as DateTime  == payload.updated_at as DateTime]">
+					<set-variable value="#[vars.noUpdated as Number + 1]" doc:name="Set Variable" doc:id="6480276a-3cfa-4445-ab02-9bbf4e67cdc3" variableName="noUpdated"/>
+				</when>
+				<when expression="#[payload.created_at as DateTime  != payload.updated_at as DateTime]">
+					<set-variable value="#[vars.updated as Number + 1]" doc:name="Set Variable" doc:id="bf8a52e3-04f9-4a19-857c-5bba1ccf9353" variableName="updated"/>
+				</when>
+			</choice>
+		</foreach>
+		<ee:transform doc:name="Transform Message" doc:id="80cd70e0-b08b-44fd-8ff4-7aa7c55e2cb3">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	'count': vars.comments as Number,
+	'noUpdated': vars.noUpdated as Number,
+	'updated': vars.updated as Number,
+	'deleted': vars.deleted as Number
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="implementationFlow" doc:id="3ed83962-7bfa-40b3-a33d-464eb003723e" >
+		<scheduler doc:name="Scheduler" doc:id="db8cdd20-b1be-43f2-a580-0df16be3a5dd" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="10" timeUnit="SECONDS"/>
+			</scheduling-strategy>
+		</scheduler>
+		<flow-ref doc:name="Flow Reference" doc:id="7d31b2a7-6d43-4864-9972-953f7ce84aa6" name="getAllNews"/>
+		<ee:transform doc:name="Transform Message" doc:id="d06defad-1bbc-4d97-a58e-64b912a82504" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import isNumeric from dw::core::Strings
+output application/json
+---
+payload filter(isNumeric($.id))]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value="#[{ 'statsNews': now() }]" doc:name="Set Variable" doc:id="98fa5389-659b-456a-b155-a42df5ff3b85" variableName="statsNews"/>
+		<foreach doc:name="For Each" doc:id="5cc43592-115d-4dd0-9e88-7c0cf75d9fc7" >
+			<set-variable value="#[payload]" doc:name="Set Variable" doc:id="81569b51-ebad-4a74-84bd-985e2ae3e6a7" variableName="element"/>
+			<http:request method="GET" doc:name="Request" doc:id="961a69c8-7bc5-43e4-853f-a1c29618180a" config-ref="HTTP_Request_configuration3" path="/batch/{id}">
+				<http:uri-params ><![CDATA[#[{ 'id': vars.element.id }]]]></http:uri-params>
+			</http:request>
+			<ee:transform doc:name="Transform Message" doc:id="6b85334b-1c55-4924-b8ce-46555cbd18d2" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+vars.element as Object ++ payload as Object]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="dabc087b-5b5c-4e78-8991-2d96d541d67a" message="#[payload]"/>
+		</foreach>
+	</flow>
+</mule>

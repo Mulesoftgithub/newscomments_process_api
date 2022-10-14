@@ -1,0 +1,9 @@
+{
+  "sampleData": {
+    "9784b316-116f-44a5-bd99-4d4d8683f1f2": {
+      "vars-message": "sample_data/defaultstringtype.json",
+      "vars-id": "sample_data/java.dwl",
+      "vars-sourceId": "sample_data/java_1.dwl"
+    }
+  }
+}

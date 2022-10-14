@@ -1,0 +1,95 @@
+#%RAML 1.0
+title: NewsComments Process API
+
+types:
+  newsResponse: !include dataTypes/newsresponse.raml
+  newsCommentsResponse: !include dataTypes/newsCommentsResponse.raml
+  messageType: !include dataTypes/messagetype.raml
+  commentResponse: !include dataTypes/commentreponse.raml 
+  newsDetailResponse: !include dataTypes/newsdetailresponse.raml
+
+/news:
+  get: 
+    responses:
+      200:
+        body:
+          application/json:
+            type: newsResponse[]
+            example: !include examples/newsResponseExample.json
+  
+
+  /{newsID}:    
+    get:
+      queryParameters:
+        sourceId: string
+      responses:
+        200:
+          body:
+            application/json:
+              type: newsDetailResponse
+              example: !include examples/news_detail_response.json          
+    
+    
+    /comments:
+      post:
+        queryParameters:
+          sourceId: string
+        body:
+          application/json:
+            type: messageType
+            example: { "message": "All the Lorem Ipsum generators on the Internet tend to repeat" }
+        responses:
+          200:
+            body:
+              application/json:
+                type: newsCommentsResponse
+                example: !include examples/newsCommentsExample.json
+
+
+      get:
+        queryParameters:
+          sourceId: string
+        responses:
+          200:
+            body:
+              application/json:
+                type: newsCommentsResponse
+                example: !include examples/newsCommentsExample.json
+      
+
+      /keyword:
+        get:
+          queryParameters:
+            sourceId: string
+            keyword: string
+          responses:
+            200:
+              body:
+                application/json:
+                  type: newsCommentsResponse
+                  example: !include examples/newsCommentsExample.json
+      
+
+      /{commentID}:
+        put:
+          body:
+            application/json:
+              type: messageType
+              example: { "message": "All the Lorem Ipsum generators on the Internet tend to repeat." }
+          responses:
+            200:
+              body:
+                application/json:
+                  type: commentResponse
+                  example: !include examples/commentResponse.json
+            
+
+        delete:
+          responses:
+            200:
+              body:
+                application/json:
+                  type: messageType
+                  example: { "message": "Comment deleted successuflly" }
+            
+                  
